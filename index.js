@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-     await client.connect();
+     // await client.connect();
     const usersDb = await client.db('userManagement').collection('users')
     // data send
     app.post('/users', async(req, res) => {

@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000
 app.use(cors())
 app.use(express.json())
@@ -21,13 +21,49 @@ async function run() {
   try {
      await client.connect();
     const usersDb = await client.db('userManagement').collection('users')
-     app.post('/users', async(req, res) => {
+    // data send
+    app.post('/users', async(req, res) => {
         const user = await req.body
         const result = await usersDb.insertOne(user)
         res.send(result)
-        console.log(user)
      })
-    
+    //  get all data
+    app.get('/users', async(req, res) => {
+      const result = await usersDb.find().toArray()
+      res.send(result)
+    })
+    // delete single data
+    app.delete('/users/:id', async(req, res) => {
+      const id = await req.params.id
+      const query = await {_id: new ObjectId(id)}
+      const result = await usersDb.deleteOne(query)
+      res.send(result)
+    })
+    // get single user data
+    app.get('/users/:id', async (req, res) => {
+      const id = await req.params.id
+      const query = await {_id: new ObjectId(id)}
+      const result = await usersDb.findOne(query)
+      res.send(result)
+    })
+    // update single data
+    app.put('/users/:id', async (req, res) => {
+      const id = req.params.id
+      const user = req.body
+      const filter = {_id: new ObjectId(id)}
+      const options = {upsert: true}
+      const updatedUser = {
+        $set: {
+          name: user.name,
+          location: user.location,
+          email: user.email,
+          phone: user.phone
+        }
+      }
+      const result = await usersDb.updateOne( filter, updatedUser,options)
+      res.send(result)
+    })
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
